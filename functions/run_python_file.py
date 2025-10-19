@@ -52,7 +52,7 @@ schema_run_python_file = types.FunctionDeclaration(
             ),
             "args": types.Schema(
                 type=types.Type.ARRAY,
-                description="List of strings to be used as arguments for the Python file execution",
+                description="Optional list of strings to be used as arguments for the Python file execution",
                 items=types.Schema(type=types.Type.STRING),
             ),
         },
