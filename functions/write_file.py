@@ -1,5 +1,6 @@
 import os
-from posixpath import dirname
+
+from google.genai import types
 
 
 def write_file(working_directory: str, file_path: str, content: str):
@@ -21,3 +22,22 @@ def write_file(working_directory: str, file_path: str, content: str):
         )
     except Exception as e:
         return f"Error: {repr(e)}"
+
+
+schema_write_file = types.FunctionDeclaration(
+    name="write_file",
+    description="Writes content to a file, contrained to be located within working directory. If the file doesn't exist, the function creates it. Overwrites existing content.",
+    parameters=types.Schema(
+        type=types.Type.OBJECT,
+        properties={
+            "file_path": types.Schema(
+                type=types.Type.STRING,
+                description="The path to the file to be written to.",
+            ),
+            "content": types.Schema(
+                type=types.Type.STRING,
+                description="Text content to be written to the file",
+            ),
+        },
+    ),
+)

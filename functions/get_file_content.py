@@ -1,5 +1,7 @@
 import os
 
+from google.genai import types
+
 from functions.config import MAX_CHARS_FROM_FILE, MAX_CHARS_ERROR_MSG_TEMPLATE
 
 
@@ -27,3 +29,18 @@ def get_file_content(working_directory: str, file_path: str):
 
     except Exception as e:
         return f"Error: {repr(e)}"
+
+
+schema_get_file_content = types.FunctionDeclaration(
+    name="get_file_content",
+    description=f"Prints the contents of a file, constrained to the working directory. The maximum amount of characters is limited to {MAX_CHARS_FROM_FILE}",
+    parameters=types.Schema(
+        type=types.Type.OBJECT,
+        properties={
+            "file_path": types.Schema(
+                type=types.Type.STRING,
+                description="The file path to read the contents of, relative to the working directory.",
+            ),
+        },
+    ),
+)
