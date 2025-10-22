@@ -1,6 +1,6 @@
-
 import unittest
 from pkg.calculator import Calculator
+
 
 class MyCalculatorTests(unittest.TestCase):
     def setUp(self):
@@ -51,5 +51,6 @@ class MyCalculatorTests(unittest.TestCase):
         result = self.calculator.evaluate(expression)
         self.assertEqual(result, 101)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

@@ -84,7 +84,7 @@ def main(user_prompt: str, is_verbose: bool = False):
                 continue
 
             if response.text:
-                print(f"Final response:\n{response.text}")
+                print(f"\nFinal response:\n{response.text}")
                 if is_verbose:
                     print(f"User prompt: {user_prompt}")
                     print(

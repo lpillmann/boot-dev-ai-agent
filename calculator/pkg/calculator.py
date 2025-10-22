@@ -1,5 +1,6 @@
 # calculator.py
 
+
 class Calculator:
     def __init__(self):
         self.operators = {
@@ -25,21 +26,31 @@ class Calculator:
         # This function will handle tokenizing the expression, including parentheses and negative numbers
         # For now, it will just split by spaces, but it will be extended later.
         import re
+
         # This regex will split by spaces, but also keep parentheses as separate tokens.
         # It also handles negative numbers by looking for a minus sign followed by a digit, not preceded by another digit or closing parenthesis.
-        tokens = re.findall(r'(\d+\.\d+|\d+|[-+*/()]|(?<!\d|\))-\d+)', expression)
+        tokens = re.findall(r"(\d+\.\d+|\d+|[-+*/()]|(?<!\d|\))-\d+)", expression)
         # Filter out empty strings that might result from the regex
         tokens = [token for token in tokens if token and not token.isspace()]
-        
+
         # Adjust for unary minus:
         # If a '-' is at the beginning or after an operator or an opening parenthesis, it's a unary minus.
         # We'll merge it with the next number.
         i = 0
         while i < len(tokens):
-            if tokens[i] == '-' and (i == 0 or tokens[i-1] in self.operators or tokens[i-1] == '('):
-                if i + 1 < len(tokens) and (tokens[i+1].isdigit() or (tokens[i+1].startswith('-') and len(tokens[i+1]) > 1 and tokens[i+1][1:].isdigit())):
-                    tokens[i] += tokens[i+1]
-                    tokens.pop(i+1)
+            if tokens[i] == "-" and (
+                i == 0 or tokens[i - 1] in self.operators or tokens[i - 1] == "("
+            ):
+                if i + 1 < len(tokens) and (
+                    tokens[i + 1].isdigit()
+                    or (
+                        tokens[i + 1].startswith("-")
+                        and len(tokens[i + 1]) > 1
+                        and tokens[i + 1][1:].isdigit()
+                    )
+                ):
+                    tokens[i] += tokens[i + 1]
+                    tokens.pop(i + 1)
             i += 1
         return tokens
 
@@ -93,5 +104,5 @@ class Calculator:
 
         if operator == "/" and b == 0:
             raise ZeroDivisionError("division by zero")
-        
+
         values.append(self.operators[operator](a, b))
