@@ -14,11 +14,6 @@ function_map = {
 
 
 def call_function(function_call_part: types.FunctionCall, verbose: bool = False):
-    if verbose:
-        print(f"Calling function: {function_call_part.name}({function_call_part.args})")
-    else:
-        print(f" - Calling function: {function_call_part.name}")
-
     function_name = function_call_part.name or ""
     args = function_call_part.args or {}
     args["working_directory"] = "./calculator"

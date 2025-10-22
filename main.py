@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 
 from dotenv import load_dotenv
 from google import genai
@@ -11,8 +12,12 @@ from functions.run_python_file import schema_run_python_file
 from functions.write_file import schema_write_file
 from functions.call_function import call_function
 
+from pprint import pprint
+
 
 load_dotenv()
+
+MAX_ITERATIONS = 20
 
 
 system_prompt = """
@@ -39,7 +44,7 @@ available_functions = types.Tool(
 )
 
 
-def main(user_prompt, is_verbose=False):
+def main(user_prompt: str, is_verbose: bool = False):
     """Main function to generate content using Google Gemini AI."""
     api_key = os.environ.get("GEMINI_API_KEY")
     client = genai.Client(api_key=api_key)
@@ -48,35 +53,62 @@ def main(user_prompt, is_verbose=False):
         types.Content(role="user", parts=[types.Part(text=user_prompt)]),
     ]
 
-    response = client.models.generate_content(
-        model="gemini-2.0-flash-001",
-        contents=messages,
-        config=types.GenerateContentConfig(
-            tools=[available_functions], system_instruction=system_prompt
-        ),
-    )
-    if response.function_calls:
-        for function_call_part in response.function_calls:
-            print(
-                f"Calling function: {function_call_part.name}({function_call_part.args})"
+    iterations = 0
+    while True:
+        try:
+            response = client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=messages,
+                config=types.GenerateContentConfig(
+                    tools=[available_functions], system_instruction=system_prompt
+                ),
             )
+            if response.candidates:
+                for candidate in response.candidates:
+                    messages.append(candidate.content)
 
-            function_call_result = call_function(function_call_part, is_verbose)
-
-            if function_call_result:
-                if is_verbose:
+            if response.function_calls:
+                for function_call_part in response.function_calls:
                     print(
-                        f"-> {function_call_result.parts[0].function_response.response}"
+                        f"Calling function: {function_call_part.name}({function_call_part.args})"
                     )
-            else:
-                raise "Error: fatal - no result from function call received"
-    else:
-        print(response.text)
 
-    if is_verbose:
-        print(f"User prompt: {user_prompt}")
-        print(f"Prompt tokens: {response.usage_metadata.prompt_token_count}")
-        print(f"Response tokens: {response.usage_metadata.candidates_token_count}")
+                    try:
+                        function_response_content = call_function(
+                            function_call_part, is_verbose
+                        )
+                        messages.append(function_response_content)
+
+                    except Exception as e:
+                        raise f"Error: fatal - no result from function call received: {repr(e)}"
+                continue
+
+            if response.text:
+                print(f"Final response:\n{response.text}")
+                if is_verbose:
+                    print(f"User prompt: {user_prompt}")
+                    print(
+                        f"Prompt tokens: {response.usage_metadata.prompt_token_count}"
+                    )
+                    print(
+                        f"Response tokens: {response.usage_metadata.candidates_token_count}"
+                    )
+                break
+
+            else:
+                print("Stopping. Model returned empty response.")
+
+            if is_verbose:
+                print(f">> Iterations count: {iterations}")
+
+        except Exception as e:
+            raise e
+
+        iterations += 1
+        time.sleep(1)
+        if iterations >= MAX_ITERATIONS:
+            print("Maximum iterations reached. Stopping.")
+            break
 
 
 if __name__ == "__main__":
