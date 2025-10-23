@@ -53,7 +53,7 @@ def main(user_prompt: str, is_verbose: bool = False):
         types.Content(role="user", parts=[types.Part(text=user_prompt)]),
     ]
 
-    # outer loop for more than one round
+    # outer loop for more than one round of user prompt
     while True:
         iterations = 0
         while True:
