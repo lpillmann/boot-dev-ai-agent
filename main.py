@@ -53,62 +53,69 @@ def main(user_prompt: str, is_verbose: bool = False):
         types.Content(role="user", parts=[types.Part(text=user_prompt)]),
     ]
 
-    iterations = 0
+    # outer loop for more than one round
     while True:
-        try:
-            response = client.models.generate_content(
-                model="gemini-2.5-flash",
-                contents=messages,
-                config=types.GenerateContentConfig(
-                    tools=[available_functions], system_instruction=system_prompt
-                ),
-            )
-            if response.candidates:
-                for candidate in response.candidates:
-                    messages.append(candidate.content)
+        iterations = 0
+        while True:
+            try:
+                response = client.models.generate_content(
+                    model="gemini-2.5-flash",
+                    contents=messages,
+                    config=types.GenerateContentConfig(
+                        tools=[available_functions], system_instruction=system_prompt
+                    ),
+                )
+                if response.candidates:
+                    for candidate in response.candidates:
+                        messages.append(candidate.content)
 
-            if response.function_calls:
-                for function_call_part in response.function_calls:
-                    print(
-                        f"Calling function: {function_call_part.name}({function_call_part.args})"
-                    )
-
-                    try:
-                        function_response_content = call_function(
-                            function_call_part, is_verbose
+                if response.function_calls:
+                    for function_call_part in response.function_calls:
+                        print(
+                            f"Calling function: {function_call_part.name}({function_call_part.args})"
                         )
-                        messages.append(function_response_content)
 
-                    except Exception as e:
-                        raise f"Error: fatal - no result from function call received: {repr(e)}"
-                continue
+                        try:
+                            function_response_content = call_function(
+                                function_call_part, is_verbose
+                            )
+                            messages.append(function_response_content)
 
-            if response.text:
-                print(f"\nFinal response:\n{response.text}")
+                        except Exception as e:
+                            raise f"Error: fatal - no result from function call received: {repr(e)}"
+                    continue
+
+                if response.text:
+                    print(f"\n=== Response ===\n{response.text}")
+                    if is_verbose:
+                        print(f"User prompt: {user_prompt}")
+                        print(
+                            f"Prompt tokens: {response.usage_metadata.prompt_token_count}"
+                        )
+                        print(
+                            f"Response tokens: {response.usage_metadata.candidates_token_count}"
+                        )
+                    break
+
+                else:
+                    print("Stopping. Model returned empty response.")
+
                 if is_verbose:
-                    print(f"User prompt: {user_prompt}")
-                    print(
-                        f"Prompt tokens: {response.usage_metadata.prompt_token_count}"
-                    )
-                    print(
-                        f"Response tokens: {response.usage_metadata.candidates_token_count}"
-                    )
+                    print(f">> Iterations count: {iterations}")
+
+            except Exception as e:
+                raise e
+
+            iterations += 1
+            time.sleep(1)
+            if iterations >= MAX_ITERATIONS:
+                print("Maximum iterations reached. Stopping.")
                 break
 
-            else:
-                print("Stopping. Model returned empty response.")
-
-            if is_verbose:
-                print(f">> Iterations count: {iterations}")
-
-        except Exception as e:
-            raise e
-
-        iterations += 1
-        time.sleep(1)
-        if iterations >= MAX_ITERATIONS:
-            print("Maximum iterations reached. Stopping.")
-            break
+        next_user_prompt = input("\n> ")
+        messages.append(
+            types.Content(role="user", parts=[types.Part(text=next_user_prompt)])
+        )
 
 
 if __name__ == "__main__":
@@ -118,4 +125,11 @@ if __name__ == "__main__":
         raise SystemExit(1)
 
     user_prompt = sys.argv[1]
-    main(user_prompt, is_verbose)
+    try:
+        main(user_prompt, is_verbose)
+    except KeyboardInterrupt:
+        print("Exiting")
+        try:
+            sys.exit(130)
+        except SystemExit:
+            os._exit(130)

@@ -1,4 +1,4 @@
-# calculator.py
+import re
 
 
 class Calculator:
@@ -23,36 +23,27 @@ class Calculator:
         return self._evaluate_infix(tokens)
 
     def _tokenize(self, expression):
-        # This function will handle tokenizing the expression, including parentheses and negative numbers
-        # For now, it will just split by spaces, but it will be extended later.
-        import re
+        raw_tokens = re.findall(r"(\d+\.\d+|\d+|[+\-*/()])", expression)
+        raw_tokens = [token for token in raw_tokens if token.strip()]
 
-        # This regex will split by spaces, but also keep parentheses as separate tokens.
-        # It also handles negative numbers by looking for a minus sign followed by a digit, not preceded by another digit or closing parenthesis.
-        tokens = re.findall(r"(\d+\.\d+|\d+|[-+*/()]|(?<!\d|\))-\d+)", expression)
-        # Filter out empty strings that might result from the regex
-        tokens = [token for token in tokens if token and not token.isspace()]
-
-        # Adjust for unary minus:
-        # If a '-' is at the beginning or after an operator or an opening parenthesis, it's a unary minus.
-        # We'll merge it with the next number.
+        processed_tokens = []
         i = 0
-        while i < len(tokens):
-            if tokens[i] == "-" and (
-                i == 0 or tokens[i - 1] in self.operators or tokens[i - 1] == "("
-            ):
-                if i + 1 < len(tokens) and (
-                    tokens[i + 1].isdigit()
-                    or (
-                        tokens[i + 1].startswith("-")
-                        and len(tokens[i + 1]) > 1
-                        and tokens[i + 1][1:].isdigit()
-                    )
-                ):
-                    tokens[i] += tokens[i + 1]
-                    tokens.pop(i + 1)
+        while i < len(raw_tokens):
+            token = raw_tokens[i]
+            is_unary_minus_candidate = (
+                token == '-' and
+                (i == 0 or 
+                 (processed_tokens and (processed_tokens[-1] in self.operators or processed_tokens[-1] == '(')))
+            )
+
+            if is_unary_minus_candidate and i + 1 < len(raw_tokens) and re.match(r'^\d+(\.\d+)?$', raw_tokens[i+1]):
+                processed_tokens.append(token + raw_tokens[i+1])
+                i += 1 
+            else:
+                processed_tokens.append(token)
             i += 1
-        return tokens
+        
+        return processed_tokens
 
     def _evaluate_infix(self, tokens):
         values = []

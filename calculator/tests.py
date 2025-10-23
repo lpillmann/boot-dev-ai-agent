@@ -1,5 +1,3 @@
-# tests.py
-
 import unittest
 from pkg.calculator import Calculator
 
@@ -8,29 +6,19 @@ class TestCalculator(unittest.TestCase):
     def setUp(self):
         self.calculator = Calculator()
 
-    def test_addition(self):
-        result = self.calculator.evaluate("3 + 5")
-        self.assertEqual(result, 8)
-
-    def test_subtraction(self):
-        result = self.calculator.evaluate("10 - 4")
-        self.assertEqual(result, 6)
-
-    def test_multiplication(self):
-        result = self.calculator.evaluate("3 * 4")
-        self.assertEqual(result, 12)
-
-    def test_division(self):
-        result = self.calculator.evaluate("10 / 2")
-        self.assertEqual(result, 5)
-
-    def test_nested_expression(self):
-        result = self.calculator.evaluate("3 * 4 + 5")
-        self.assertEqual(result, 17)
-
-    def test_complex_expression(self):
-        result = self.calculator.evaluate("2 * 3 - 8 / 2 + 5")
-        self.assertEqual(result, 7)
+    def test_evaluations(self):
+        test_cases = [
+            ("3 + 5", 8),
+            ("10 - 4", 6),
+            ("3 * 4", 12),
+            ("10 / 2", 5),
+            ("3 * 4 + 5", 17),
+            ("2 * 3 - 8 / 2 + 5", 7),
+        ]
+        for expression, expected_result in test_cases:
+            with self.subTest(expression=expression):
+                result = self.calculator.evaluate(expression)
+                self.assertEqual(result, expected_result)
 
     def test_empty_expression(self):
         result = self.calculator.evaluate("")
@@ -44,6 +32,20 @@ class TestCalculator(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.calculator.evaluate("+ 3")
 
+    def test_negative_numbers(self):
+        test_cases = [
+            ("5 + -3", 2),
+            ("-5 + 3", -2),
+            ("-5 - -3", -2),
+            ("10 * -2", -20),
+            ("-10 / 2", -5),
+            ("2 * -3 + 5", -1),
+        ]
+        for expression, expected_result in test_cases:
+            with self.subTest(expression=expression):
+                result = self.calculator.evaluate(expression)
+                self.assertEqual(result, expected_result)
+
 
 if __name__ == "__main__":
-    unittest.main()
+    unittest.main(verbosity=2)
